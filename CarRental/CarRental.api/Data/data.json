@@ -1,0 +1,26 @@
+﻿
+  [
+    {
+      "Id": 1,
+      "Tz": "327860151",
+      "Name": "John Doe",
+      "Adress": "123 Main St",
+      "Email": "john.doe@example.com",
+      "Password": "password123",
+      "Zip_code": 12345,
+      "Phone": "555-123-4567"
+    },
+    {
+      "Id": 2,
+      "Tz": "057750234",
+      "Name": "Jane Smith",
+      "Adress": "456 Elm St",
+      "Email": "jane.smith@example.com",
+      "Password": "pass123",
+      "Zip_code": 54321,
+      "Phone": "555-987-6543"
+    }
+  ]
+
+
+
