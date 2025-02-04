@@ -1,37 +1,76 @@
-// using Microsoft.AspNetCore.Http.Features;
-// using TodoApi;
-
-// var builder = WebApplication.CreateBuilder(args);
-// var app = builder.Build();
-// app.MapGet("/items", () =>"hello world");
-
-// app.Run();
-
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using TodoApi;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure the DbContext with MySQL
+// Add DbContext to the DI container
 builder.Services.AddDbContext<ToDoDbContext>(options =>
-    options.UseMySql("name=ToDoDB", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql")));
+    options.UseMySql("name=ToDoDB", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql")
+    ));
+// builder.Services.AddDbContext<ToDoDbContext>(options =>
+//     options.UseMySql(builder.Configuration.GetConnectionString("todo"),
+//     new MySqlServerVersion(new Version(8, 0, 41))));
+
+// Add CORS services to the container
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        builder => builder
+            .AllowAnyOrigin() // Allows any origin
+            .AllowAnyMethod() // Allows any HTTP method (GET, POST, etc.)
+            .AllowAnyHeader()); // Allows any header
+});
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+// Add Swagger services
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+});
 
 var app = builder.Build();
 
-// Get all items
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+// Use the CORS policy
+app.UseCors("AllowAllOrigins");
+
+// Enable middleware to serve generated Swagger as a JSON endpoint.
+app.UseSwagger();
+
+// Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+    c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+});
+
+app.UseAuthorization();
+app.MapControllers();
+
+// Define API endpoints
+app.MapGet("/", () => "Hello World!");
+// GET all items
 app.MapGet("/items", async (ToDoDbContext db) =>
-{
-    return await db.Items.ToListAsync();
-});
+    await db.Items.ToListAsync());
 
-// Get item by ID
+// GET item by ID
 app.MapGet("/items/{id}", async (int id, ToDoDbContext db) =>
-{
-    return await db.Items.FindAsync(id) is Item item ? Results.Ok(item) : Results.NotFound();
-});
+    await db.Items.FindAsync(id) is Item item
+        ? Results.Ok(item)
+        : Results.NotFound());
 
-// Create a new item
+// POST new item
 app.MapPost("/items", async (Item item, ToDoDbContext db) =>
 {
     db.Items.Add(item);
@@ -39,7 +78,20 @@ app.MapPost("/items", async (Item item, ToDoDbContext db) =>
     return Results.Created($"/items/{item.Id}", item);
 });
 
-// Delete an item
+// PUT update item
+app.MapPut("/items/{id}", async (int id, Item inputItem, ToDoDbContext db) =>
+{
+    var item = await db.Items.FindAsync(id);
+    if (item is null) return Results.NotFound();
+
+    item.Name = inputItem.Name;
+    item.IsComplete = inputItem.IsComplete;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+// DELETE item
 app.MapDelete("/items/{id}", async (int id, ToDoDbContext db) =>
 {
     var item = await db.Items.FindAsync(id);
@@ -50,17 +102,9 @@ app.MapDelete("/items/{id}", async (int id, ToDoDbContext db) =>
     return Results.NoContent();
 });
 
-// Update an item
-app.MapPut("/items/{id}", async (int id, Item updatedItem, ToDoDbContext db) =>
-{
-    var item = await db.Items.FindAsync(id);
-    if (item is null) return Results.NotFound();
-
-    item.Name = updatedItem.Name;
-    item.IsComplete = updatedItem.IsComplete;
-
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
 app.Run();
+
+
+// builder.Services.AddDbContext<ToDoDbContext>(options =>
+//     options.UseMySql("name=ToDoDB", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql")
+//     ));
