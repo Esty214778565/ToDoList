@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+console.log("url of server: "+axios.defaults.baseURL);
 
 
 axios.interceptors.response.use(
@@ -24,6 +25,9 @@ export default {
     console.log('addTask', name);
     try {
       const result = await axios.post(`/items`, { name });
+      console.log(
+        "result: "+result);
+      
       return result.data;
     } catch (error) {
       console.error('Error adding task:', error);
