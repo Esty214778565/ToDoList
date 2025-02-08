@@ -66,9 +66,11 @@ app.MapGet("/items", async (ToDoDbContext db) =>
 
 // GET item by ID
 app.MapGet("/items/{id}", async (int id, ToDoDbContext db) =>
-    await db.Items.FindAsync(id) is Item item
+  await db.Items.FindAsync(id) is Item item
         ? Results.Ok(item)
         : Results.NotFound());
+        
+        
 
 // POST new item
 app.MapPost("/items", async (Item item, ToDoDbContext db) =>
@@ -105,6 +107,4 @@ app.MapDelete("/items/{id}", async (int id, ToDoDbContext db) =>
 app.Run();
 
 
-// builder.Services.AddDbContext<ToDoDbContext>(options =>
-//     options.UseMySql("name=ToDoDB", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql")
-//     ));
+
